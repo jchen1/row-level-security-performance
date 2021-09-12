@@ -29,6 +29,23 @@ create index on permissions(user_or_group_id);
 
 create unique index permissions_index ON permissions (item_id, user_or_group_id);
 
+create function my_roles()
+returns uuid[] as $$
+  select regexp_split_to_array(current_setting('jwt.claims.roles'), ',')::uuid[]
+$$
+language sql;
+
+create function query_objects(subjects uuid[], role permission_role)
+returns uuid as $$
+  select item_id
+  from permissions
+  where (
+    permissions.user_or_group_id = any(subjects) and
+    (role = 'read' or permissions.role = role)
+  )
+$$
+language sql;
+
 grant all
 on schema public
 to application_user;
@@ -47,25 +64,11 @@ for all
 to application_user
 using (
   items.public = true
-  or exists(
-    select item_id
-    from permissions
-    where (
-      permissions.user_or_group_id =
-        any(regexp_split_to_array(current_setting('jwt.claims.roles'), ',')::uuid[])
-      and permissions.item_id = items.id
-    )
-  )
+  or (exists (select item_id from query_objects(my_roles(), 'read')))
 )
 with check (exists(
   select item_id
-  from permissions
-  where (
-    permissions.user_or_group_id =
-      any(regexp_split_to_array(current_setting('jwt.claims.roles'), ',')::uuid[])
-    and permissions.item_id = items.id
-    and permissions.role = 'write'
-  )
+  from query_objects(my_roles(), 'write')
 ));
 
 create policy new_item

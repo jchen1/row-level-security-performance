@@ -1,8 +1,8 @@
 version: "3"
 services:
   pg:
-    image: mdillon/postgis:10
-    container_name: 'breakdown-pg'
+    image: postgres:13.4
+    container_name: "breakdown-pg"
     command: postgres -c config_file=/etc/postgresql.conf
     ports:
       - 5432:5432
@@ -10,7 +10,8 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./postgresql.conf:/etc/postgresql.conf
     environment:
-      POSTGRES_DB: 'test'
+      POSTGRES_DB: "test"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
     networks:
       - database
 volumes:

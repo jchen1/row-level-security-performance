@@ -23,6 +23,7 @@ BEGIN
   LOOP
   EXIT WHEN counter = n;
 	  counter := counter + 1;
+    raise notice 'creating user %', counter;
 	  insert into users_and_groups (name) values ('user ' || counter) returning id into user_id;
 	  execute 'set local jwt.claims.roles = ''' || user_id || '''';
 	  perform insert_data(1000);
@@ -39,7 +40,7 @@ BEGIN
 end;
 $$ LANGUAGE plpgsql;
 
-select insert_users(100);
+select insert_users(1000);
 
 create or replace function user_item_stats()
   returns setof text

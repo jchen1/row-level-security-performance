@@ -23,6 +23,7 @@ begin
   loop
   exit when counter = n;
     counter := counter + 1;
+    raise notice 'creating user %', counter;
     insert into users (name) values ('user ' || counter) returning id into user_id;
     execute 'set local jwt.claims.roles = ''' || user_id || '''';
     perform insert_data(1000);
@@ -69,4 +70,4 @@ create view permission_stats as
     ) as user_count
   from items;
 
-select insert_users(100);
+select insert_users(1000);
